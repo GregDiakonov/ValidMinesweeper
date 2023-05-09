@@ -64,11 +64,21 @@
 
             let xhr = new XMLHttpRequest();
             xhr.withCredentials = true;
+            xhr.onreadystatechange = () => {
+                if(xhr.readyState === XMLHttpRequest.DONE) {
+                    const status = xhr.status;
+                    alert(status);
+                    if(status === 0 || (status >= 200 && status < 400)) {
+                        alert(xhr.responseText);
+                    }
+                    else {
+                        alert("error!");
+                    }
+                }
+            }
             xhr.open("GET", url + String(id));
 
             xhr.send();
-
-            alert(xhr.response);
 
             let answer = parseInt(xhr.responseText);
 
