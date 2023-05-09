@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Minesweeper</title>
+    <meta charset="Unicode" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type = "text/javascript" src="assets/scripts/game.js"></script>
+</head>
+
+<body>
+    
+    <div class="background-image">
+        <div class="main">
+            <div class = "main_inside"> 
+                <nav> 
+                <a class = "main_link" onclick="setSize(10, 10, 1)">Новичок</a> 
+                <a class = "main_link" onclick="setSize(16, 16, 2)">Любитель</a> 
+                <a class = "main_link" onclick="setSize(30, 16, 3)">Профессионал</a> 
+                </nav> 
+            </div>
+
+            <div id = "game"></div>
+        </div>
+        <div class="side"></div>
+    </div>
+    <div class="header">
+        <div class="container">
+            <div class="header_inside">
+                <h1>VALID MINESWEEPER</h1>
+    
+                <nav>
+                    <a class="header_link" onclick=""><strong>Войти</strong></a>
+                    <a class="header_link" href="#"><strong>Настройки</strong></a>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script type = "text/babel">
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        var url = "https://localhost:7082/api/Mines/";
+
+        var varWidth = 10;
+        var varHeight = 10;
+        var varBoard = [];
+
+        async function setSize(x, y, sizeCode) {
+            varWidth = x;
+            varHeight = y;
+            varBoard = []
+
+            var id = Math.floor(Math.random() * 10000)
+
+            id += sizeCode*10000;
+
+            let answer = 9;
+
+            for(let i = 0; i < varHeight; i++) {
+                for(let j=0; j < varWidth; j++) {
+                    if(i*varWidth + j == answer) {
+                        varBoard.push(0);
+                    }
+                    else {
+                        varBoard.push(9);
+                    }
+                }
+            }
+
+            root.render(<Table width = {varWidth} height = {varHeight} board = {varBoard} id = {id}/>)
+        }
+
+        const {useState} = React;
+        const {useEffect} = React; 
+
+        function Table(props) {
+            const[board, setBoard] = useState([]);
+
+            /*
+                С помощью этого метода мы должны послать к бек-энду нужную информацию
+                ТО ЕСТЬ визуальное представление доски, её высоту и ширину, а также клетку, куда кликнули.
+
+                В ОТВЕТ мы должны получить НОВОЕ визуальное представление доски, высчитанное в бек-энде на основе
+                истинного расположения мин. Старое визуальное представление заменить на новое, тем самым 
+                перерисовав доску на стороне фронт-энда.
+            */
+            async function changeTile(index, pressMode) {
+                if(board[index] == 0) {
+                    board[index] == 9;
+                }
+
+                let xhr = new XMLHttpRequest();
+                let serializedBoard = JSON.stringify(board);
+
+                let thisUrl = url + String(props.id) + "/" + String(index) + "/" + String(pressMode) + "/" + serializedBoard;
+                xhr.open("GET", thisUrl);
+                xhr.send();
+
+                let newBoard = JSON.parse(xhr.response);
+
+                setBoard(newBoard);
+
+                return false;
+            }
+
+            useEffect(() => {
+                setBoard(props.board)
+            },
+            [props.board])
+
+
+            var thisTable = []
+
+            for(let i = 0; i < props.height; i++) {
+                for(let j = 0; j < props.width; j++) {
+                    thisTable.push(<Tile x={j} y = {i} width = {props.width} 
+                        board = {board} onClick = {changeTile} onContextMenu = {changeTile}/>)
+                }
+                thisTable.push(<br/>)
+            }
+
+            return (
+                <div className = "field">
+                    {thisTable}
+                </div>
+            )
+        }
+
+        function Tile(props) {
+            let index = props.width*props.y + props.x;
+
+            switch(props.board[index]) {
+                case(9):
+                    return (
+                        <button className = "closed_tile" onClick = {() => props.onClick(index, 0)} 
+                            onContextMenu = {() => props.onClick(index, 1)}></button>
+                    );
+                case(-1):
+                    return (
+                        <button className = "zero_tile"></button>
+                    );
+                case(1):
+                    return (
+                        <button className = "one_tile"></button>
+                    );
+                case(2):
+                    return (
+                        <button className = "two_tile"></button>
+                    );
+                case(3):
+                    return (
+                        <button className = "three_tile"></button>
+                    );
+                case(4):
+                    return (
+                        <button className = "four_tile"></button>
+                    );
+                case(5):
+                    return (
+                        <button className = "five_tile"></button>
+                    );
+                case(6):
+                    return (
+                        <button className = "six_tile"></button>
+                    );
+                case(7):
+                    return (
+                        <button className = "seven_tile"></button>
+                    );
+                case(8):
+                    return (
+                        <button className = "eight_tile"></button>
+                    );
+                case(-3):
+                    return (
+                        <button className = "bomb"></button>
+                    );
+                case(-4):
+                    return (
+                        <button className = "wrong"></button>
+                    );
+                case(-2):
+                    return (
+                        <button className = "flag" onContextMenu = {() => props.onClick(index, 1)}></button>
+                    );
+                case(0):
+                    return(
+                        <button className = "start" onClick = {() => props.onClick(index, 0)}></button>
+                    ); 
+                }
+            }
+        
+        const myElement = <Table width={varWidth} height={varHeight}/>
+
+        const root = ReactDOM.createRoot(document.getElementById('game'));
+    </script>
+
+</body>
+
+</html>
